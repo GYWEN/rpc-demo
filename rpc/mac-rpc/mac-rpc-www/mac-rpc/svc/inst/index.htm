@@ -1,0 +1,144 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.macRpc.svcIndex.ui, pp = pg.params,
+		data = null,
+		svcGd = pg.seek('svcGd'),
+		infoPl = pg.children('.infoPl');
+
+	svcGd.mac('grid', {
+		key: 'name',
+		cols : [{
+			field: 'id', title: '', width: 40:
+			render: function(r, tr, me) {
+				var a = $('<span class="icon icon-plus"></span>');
+				a.click(function(){
+					//展示方法
+					var yy = me.find('.ybar>div'), pl = tr.exPanel;
+					if (a.hasClass('icon-plus')) {
+						if (pl) {
+							pl.show();
+						} else {
+							pl = $('<div class="expand"></div>');
+							pl.append(JSON.stringify(r));
+							tr.exPanel = pl.insertAfter(tr);
+							$('<div class="clear"></div>').insertBefore(pl);
+						}
+						yy.height(yy.height() + pl.height());
+						a.removeClass('icon-plus').addClass('icon-minus');
+					} else {
+						pl.hide();
+						yy.height(yy.height() - pl.height());
+						a.removeClass('icon-minus').addClass('icon-plus');
+					}
+				});
+				return a;
+			}
+		}, {
+			field: 'key', title : '服务名', width: 160,
+			render: function(r){
+				return r.id || r.name;
+			}
+		},{
+			field: 'group', title : '分组', width: 100,
+		},{
+			field: 'name', title : '名称', width: 100,
+		},{
+			field: 'version', title : '版本', width: 80,
+		}],
+		pagerLength: 10,
+		onRowClick: function(){
+			svcGd.find('.tr').removeClass('selected');
+			var r = svcGd.selected = $(this).addClass('selected');
+			showDetail(r.attr('name'));
+		}
+	});
+
+// 	function init(o,s) {
+// 		data = o;
+// 		var l = [], d = o.reg,h = {};
+// 		for (var k in d) {
+// 			for(var a in d[k].referenceMap){
+// 				l.push(d[k].referenceMap[a]);
+// 			}
+// 			for(var b in d[k].serviceMap){	
+//  				l.push(d[k].serviceMap[b]); 
+// 			}
+// 		}
+// 		for (var o in l) {
+// 			var r1 = l[o].name;
+// 			var r2 = l[o].group;
+// 			var r3 = l[o].interfaceName;
+// 			var r4 = l[o].version;
+// 			var r = r1+r2+r3+r4;
+// 			if(s == null){
+// 				h[r] = l[o];
+// 			}else{
+// 				if(r.indexOf(s) >= 0){
+// 					h[r] = l[o];
+// 				}
+// 			}
+// 		}
+// 		var f = $.map(h, function(i, j){
+// 			return i;
+// 		});
+// 		svcGd.loadData(f);
+// 	}
+	
+	function showDetail(o){
+		App.show({
+			ctx : 'macRpc',
+			action : 'svcMain',
+			params : { reg: o, all: data }
+		}, $.noop, infoPl);
+	}
+	
+	function adjust(){
+		var h = pg.parent().height();
+		pg.height(h);
+		svcGd.parent().height(h);
+		svcGd.adjust();
+		infoPl.height(h);
+		infoPl.width(pg.width() - svcGd.width());
+	}
+	
+	$(window).resize(adjust);
+	adjust();
+	
+// 	var w = mac.wait('Loading');
+// 	initdata(null);
+// 	function initdata(b){
+// 		$.get(App.ctx + '/mac/rpc/info.do', {
+// 			addr: App.getHashParam('addr'),
+// 			r: Math.random()
+// 		}, function(rs) {
+// 			w.close();
+// 			var ro = mac.eval(rs);
+// 			if (ro.success) {
+// 				init(ro.data,b);
+// 			} else {
+// 				mac.alert(ro.data, ro.params);
+// 			}
+// 		});
+// 	}
+
+	pg.seek('srchBtn').click(function(e) {
+// 		initdata($(pg.seek('key')).val());
+	});
+	
+	pg.seek('key').keydown(function(e) {
+		if (e.keyCode == 13) {
+// 			initdata($(pg.seek('key')).val());
+		}
+	});
+});
+</script>
+<div class="left fl">
+<div class="head">
+	&nbsp;&nbsp; 服务名：<input type="text" name="key" />
+	<button name="srchBtn">查找</button>
+</div>
+	<div class="body">
+		<div class="grid" name="svcGd"></div>
+	</div>
+</div>
+<div class="infoPl"></div>

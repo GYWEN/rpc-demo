@@ -1,0 +1,83 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.macRpc.nodeIndex.ui, pp = pg.params,
+		nodeGd = pg.seek('nodeGd'),
+		infoPl = pg.children('.infoPl');
+	
+/* 	var nodeSvc = {
+		list: function(cb){
+			$.ajax({
+				url: '/mac-rpc/rpc',
+				method: 'POST',
+				dataType: 'text',
+				headers: {
+					service: 'test/name/com.boarsoft.rpc.web.service.NodeService/1.0',
+					method: 'list()',
+					protocol: 'json'
+				},
+				data: ''
+			}, cb);
+		}
+	}
+	nodeSvc.list(function(rs){
+		alert(rs);
+	}); */
+
+	nodeGd.mac('grid', {
+		key: 'addr',
+		cols : [{
+			field: 'addr', title: 'IP地址', width: 180
+		},{
+			field: 'version', title: '上次更新时间', width: 180
+		}],
+		pagerLength: 10,
+		onRowClick: function(){
+			nodeGd.find('.tr').removeClass('selected');
+			var r = nodeGd.selected = $(this).addClass('selected');
+			// window.location = '#mac-rpc/node?addr=' + r.attr('name');
+			App.show({
+				ctx: 'macRpc',
+				action: 'nodeMain',
+				params: { addr: r.attr('name') }
+			}, $.noop, infoPl);
+			return false;
+		},
+		loader: {
+			url: App.macRpc.ctx + '/node/list.do',
+			params: { pageNo: 1, pageSize: 50, addr: App.getHashParam('addr') },
+			autoLoad: true
+		},
+		pagerLength: 10
+	});
+
+	function adjust(){
+		var p = pg.parent(), h = p.height() - 2, w = p.width();
+		pg.width(w).height(h);
+		nodeGd.parent().height(h - 16);
+		nodeGd.adjust();
+		infoPl.height(h - 8).width(w - nodeGd.width() - 16);
+	}
+	$(window).resize(adjust);
+	adjust();
+
+	pg.seek('findBtn').click(function(e) {
+		nodeGd.load($(pg.seek('key')).val());
+	});
+
+	pg.seek('key').keydown(function(e) {
+		if (e.keyCode == 13) {
+			nodeGd.load($(pg.seek('key')).val());
+		}
+	});
+});
+</script>
+<div class="left fl">
+<div class="head">
+	&nbsp;&nbsp; IP地址：<input type="text" name="key" />
+	<button name="findBtn">查找</button>
+</div>
+	<div class="body">
+		<div class="grid" name="nodeGd"></div>
+	</div>
+</div>
+<div class="infoPl"></div>

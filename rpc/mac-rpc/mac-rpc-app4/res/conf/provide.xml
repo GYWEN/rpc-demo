@@ -1,0 +1,6 @@
+<services>
+<!-- 	<service ref="rpcSvcSpy" group="soagov" name="svcSpy" -->
+<!-- 		interface="com.boarsoft.soagov.spy.SvcSpy" version="1.0.0" -->
+<!-- 		timeout="6000"> -->
+<!-- 	</service> -->
+</services>

@@ -1,0 +1,148 @@
+<script type="text/javascript">
+$(function() {
+	var pg = App.macRpc.svcInstLimit.ui, pp = pg.params,
+		gd = pg.find('.grid'), dd = pp.data, sc = dd.svcConfig,
+		set = sc.slaConfigs, tbm = dd.tpsBucketMap;
+
+	var frm = {
+		key: pg.seek('key'),
+		limit: pg.seek('limit')
+	};
+
+	gd.mac('grid', {
+		cols : [{
+			field: 'key', width: 440, title: '限流配置项',
+			render: function(r) {
+				return $('<span class="a"></span>').click(function(){
+					setValues({ key: r.key, limit: tbm[r.key].limit });
+				}).append(r.key);
+			}
+		},{
+			field: 'max', width: 80, title: '上限',
+			render: function(r) {
+				var b = tbm[r.key];
+				return b? (b.limit > 99999? -1:b.limit) : -1;
+			}
+		},{
+			field: 'opt', title: '操作', width: 60,
+			render: function(r) {
+				return $('<span class="a"></span>').click(function(){
+					mac.confirm('确定要删除此限流配置吗？', function(){
+						$.post(App.soagov.ctx + '/svc/inst/toggle.do', {
+							act: 5,
+							key: r.key,
+							svcId: pp.svcId
+						}, function(rs){
+							var ro = mac.eval(rs);
+							if (ro.success) {
+								pg.callback();
+								pg.close();
+// 								set = $.map(set, function(a, i){
+// 									if (a.key == r.key) {
+// 										return null;
+// 									}
+// 									return a;
+// 								});
+// 								gd.loadData(set);
+							} else {
+								mac.alert('删除限流配置失败');
+							}
+						});
+					});
+					return false;
+				}).append('删除');
+			}
+		}]
+	});
+	gd.loadData(set);
+
+	function setValues(o) {
+		frm.key.val(o.key);
+		frm.limit.val(o.limit > 99999? -1:o.limit);
+	}
+	setValues({ key: '', limit: dd.tpsBucket.limit });
+	
+	pg.seek('save').click(function() {
+		var na = frm.key.val().trim().split("\n");
+		na = $.map(na, function(n){
+			n = n.trim();
+			if (n.indexOf('=') > 0) {
+				return n;
+			}
+		});
+		var nk = na.join("&"), tt = nk? '添加新配置':'更新主配置';
+		if (nk) {
+			for (var i in set) {
+				if (set[i].key == nk) {
+					tt = '更新限流配置项';
+					break;
+				}
+			}
+		}
+		mac.confirm('确定要' + tt + '吗？', function(){
+			$.post(App.soagov.ctx + '/svc/inst/toggle.do', {
+				act: 4, // ACT_LIMIT
+				svcId: pp.svcId,
+				id: pp.id, //可选
+				key: nk, //可选
+				tpsLimit: frm.limit.val()
+			}, function(rs){
+				var ro = mac.eval(rs);
+				if (ro.success) {
+					pg.callback();
+					pg.close();
+					mac.alert(tt + '成功');
+				} else {
+					mac.alert(tt + '失败');
+				}
+			});
+		});
+		return false;
+	});
+	var on = sc.slaConfigOn;
+	pg.seek('on').click(function() {
+		var me = $(this), tt = me.text();
+		mac.confirm('确定要' + tt + '吗？', function(){
+			$.post(App.soagov.ctx + '/svc/inst/toggle.do', {
+				act: on? 7:6, // ACT_LIMIT
+				svcId: pp.svcId,
+				id: pp.id //可选
+			}, function(rs){
+				var ro = mac.eval(rs);
+				if (ro.success) {
+					pg.callback();
+					pg.close();
+					mac.alert(tt + '成功');
+				} else {
+					mac.alert(tt + '失败');
+				}
+			});
+		});
+		return false;
+	}).text((on? '关闭':'开启') + '监控与限流');
+	pg.seek('cancel').click(function() {
+		pg.close();
+	});
+});
+</script>
+<div class="body">
+	<div class="grid"></div>
+</div>
+<div class="form">
+	<div class="item">
+		<span class="label">维度设置</span>
+		<textarea rows="2" cols="35" name="key"></textarea>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">TPS上限</span>
+		<input type="number" name="limit" value="-1" />
+		<div class="clear"></div>
+	</div>
+	<div class="clear"></div>
+	<div class="bottom">
+		<button name="save">添加或更新限流配置</button>
+		<button name="on">开启监控与限流</button>
+		<button name="cancel">关闭</button>
+	</div>
+</div>

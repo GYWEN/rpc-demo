@@ -1,0 +1,269 @@
+<style type="text/css">
+.chart { width: 418px; height: 300px; margin-top: 10px}
+</style>
+<script type="text/javascript" src="/js/echarts.min.js"></script>
+<script type="text/javascript">
+$(function(){
+	var pg = App.macRpc.svcInstMonitor.ui, pp = pg.params,
+		nv = pg.children('.head');
+	
+	nv.seek('back').click(pg.callback);
+	
+	var tpsChart = echarts.init(pg.seek('tpsChart')[0])
+		, avgChart = echarts.init(pg.seek('avgChart')[0])
+		, timeArr = [] , maxLen, asStatus = false, tpsArr = [];
+	
+	var dim = {
+		tps: { txt: 'TPS', arr: [] },
+		avg: { txt: '平均响应时间', arr: [] }
+	}
+
+	var frm = {
+		method: pg.seek('method'),
+		date: pg.seek('date'),
+		hour: pg.seek('hour'),
+		minute: pg.seek('minute'),
+		second: pg.seek('second'),
+		rTime: pg.seek('rTime'), // refresh interval
+		tTime: pg.seek('tTime'), // monitor period
+		start: pg.seek('start'),
+		stop: pg.seek('stop'),
+		reset: pg.seek('reset'),
+		autoStop: pg.seek('autoStop')
+	};
+	
+	frm.date.datepicker({
+		prevText: "<上一月",
+		nextText: "下一月>",
+		dateFormat: "yy-mm-dd",
+		changeMonth: true,
+		changeYear: true,
+		inline: true
+	});
+	frm.date.val(new Date().format('yyyy-MM-dd'));
+	frm.hour.val(0);
+	frm.minute.val(0);
+	frm.second.val(0);
+	
+	function getValues() {
+		return {
+			date: pg.seek('date').val(),
+			hour: pg.seek('hour').val(),
+			minute: pg.seek('minute').val(),
+			second: pg.seek('second').val(),
+			rTime: pg.seek('rTime').val(),
+			tTime: pg.seek('tTime').val(),
+			start: pg.seek('start').val()
+		}
+	}
+	
+	function lineChart(chart, d) {
+		chart.setOption({
+			grid: { // 控制图的大小
+				x: 50,
+				y: 40,
+				x2: 25,
+				y2: 45
+			},
+			title: {
+				text: d.txt,
+				x: 'center',
+				y: 'bottom',
+				textStyle:{
+					color: '#388CD2',
+					fontSize: 14
+				}
+			},
+			tooltip: {},
+			legend: {
+				data: [d.txt]
+			},
+			xAxis: {
+				boundaryGap: false,
+				data: timeArr
+			},
+			yAxis: {
+				type: 'value',
+				boundaryGap: false
+			},
+			series: [{
+				name: d.txt,
+				type: 'line',
+				data: d.arr,
+				itemStyle: {
+					normal: {
+						lineStyle: {
+							width:1 //折线宽度,
+						}
+					}
+				}
+			}],
+			color:['#388CD2']
+		});
+	}
+	
+	function push(c, d, v) {
+		var a = d.arr;
+		if (a.length > maxLen) {
+			a.shift();
+		}
+		a.push(Math.max(0, v));
+		c.setOption({
+			xAxis: {
+				data: timeArr,
+				boundaryGap: false,
+			},
+			series: [{
+				name: d.txt,
+				data: a
+			}]
+		});
+	}
+	
+	function run() {
+		// 当前时间晚于自动停止时间时，清空定时器，停止刷新
+		if (frm.autoStop.is(':checked') 
+				&& end.getTime() < new Date().getTime()) {
+			clearInterval(App.timer);
+			frm.stop.attr('disabled', 'disabled');
+			frm.start.removeAttr('disabled');
+			frm.reset.removeAttr('disabled');
+			return;
+		}
+		$.post(App.soagov.ctx + '/svc/monitor/tps.do', {
+			svcId: pp.svc.id,
+			addr: pp.addr,
+			key: pp.code,
+			r: new Date().getTime()
+		}, function (rs) {
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				var tps = ro.data * 1;
+				if (timeArr.length >= maxLen) {
+					timeArr.shift();
+					tpsArr.shift();
+				}
+				timeArr.push(new Date().format('HH:mm:ss'));
+				tpsArr.push(tps);
+				push(tpsChart, dim.tps, tps);
+				var t = 0, s = 0;
+				$.each(tpsArr, function(i) {
+					var v = tpsArr[i];
+					t += v;
+					if (v) {
+						s++;
+					}
+				});
+				push(avgChart, dim.avg, t? (s * 1000 / t).toFixed(2) : 0);
+			}
+		});
+	}
+
+	frm.start.click(function () {
+		// 计算线图x轴最大值
+		var rt = frm.rTime.val() * 1000, tt = frm.tTime.val() * 1000;
+		maxLen = Math.floor(tt/rt);
+		// 自动停止时间合法性校验
+		var da = frm.date.val().split('-'), end = new Date(da[0], da[1] - 1, da[2],
+			frm.hour.val() * 1, frm.minute.val() * 1, frm.second.val() * 1);
+		if (frm.autoStop.is(':checked')) {
+			if (end.getTime() < new Date().getTime() + tt){
+				mac.alert('自动停止时间设置过小');
+				return;
+			}
+		}
+		// 启动定时器
+		mac.confirm('确定要开始吗？', function(){
+			clearInterval(App.timer);
+			App.timer = setInterval(run, rt);
+			frm.start.attr('disabled', 'disabled');
+			frm.stop.removeAttr('disabled');
+			frm.reset.attr('disabled', 'disabled');
+		});
+	});
+
+	pg.seek('stop').click(function () {
+		mac.confirm('确定要停止吗？', function(){
+			clearInterval(App.timer);
+			frm.stop.attr('disabled', 'disabled');
+			frm.start.removeAttr('disabled');
+			frm.reset.removeAttr('disabled');
+		});
+	});
+	
+	pg.seek('reset').click(function () {
+		if (frm.stop.attr('disabled')) {
+			dim = {
+				tps: { txt: 'TPS', arr: [] },
+				avg: { txt: '平均响应时间', arr: [] }
+			}
+			lineChart(tpsChart, dim.tps);
+			lineChart(avgChart, dim.avg);
+		}
+	});
+	
+	function init() {
+		lineChart(tpsChart, dim.tps);
+		lineChart(avgChart, dim.avg);
+		
+		nv.seek('node').text(pp.addr);
+		nv.seek('title').text(pp.title || pp.svc.name);
+	}
+	init();
+
+	function adjust(){
+		var h = pg.parent().height();
+		pg.height(h);
+	}
+	$(window).resize(adjust);
+	adjust();
+});
+</script>
+<div class="head">
+	<span class="a" name="back">返回</span>
+	&gt;&gt;
+	<span name="node">远程节点</span>
+	&gt;&gt;
+	<span name="title">服务监控</span>
+</div>
+<div class="neck">
+	<div class="fl">
+		<div class="label">
+			<span class="fr">刷新时间：</span>
+		</div>
+		<input type="number" name="rTime" min="3" max="600" value="3"/>
+		<span>秒</span>
+		<div class="clear"></div>
+	</div>
+	<div class="fl">
+		<div class="label">
+			<span class="fr">显示时长：</span>
+		</div>
+		<input type="number" name="tTime" min="60" max="3600" value="300"/>
+		<span>秒</span>
+		<div class="clear"></div>
+	</div>
+	<div class="clear"></div>
+	<div class="fl">
+		<div class="label">
+			<div class="fr">
+				<input name="autoStop" type="checkbox" />
+				<span>自动停止：</span>
+			</div>
+		</div>
+		<input type="text" name="date" class="date10">
+		<input name="hour" class="num2" min="00" max="23" value="00" type="number" placeholder="时" />
+		<input name="minute" class="num2" min="00" max="59" value="00" type="number" placeholder="分" />
+		<input name="second" class="num2" min="00" max="59" value="00" type="number" placeholder="秒" />
+		<button name="start">开始</button>
+		<button name="stop" disabled>停止</button>
+		<button name="reset">重置</button>
+		<div class="clear"></div>
+	</div>
+	<div class="clear"></div>
+</div>
+<div class="body">
+	<div class="chart fl" name="tpsChart"></div>
+	<div class="chart fl" name="avgChart"></div>
+	<div class="clear"></div>
+</div>

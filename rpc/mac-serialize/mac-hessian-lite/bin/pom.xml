@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.boarsoft</groupId>
+		<artifactId>mac-parent</artifactId>
+		<version>1.1.0</version>
+	</parent>
+	<artifactId>mac-hessian-lite</artifactId>
+	<packaging>jar</packaging>
+	<version>1.1.1</version>
+	<name>mac-hessian-lite</name>
+	<description>Copy from com.caucho.hessian 4.0.38</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.boarsoft</groupId>
+			<artifactId>mac-java-serialize</artifactId>
+			<version>1.1.0</version>
+		</dependency>
+	</dependencies>
+</project>

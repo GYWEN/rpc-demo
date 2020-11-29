@@ -1,0 +1,288 @@
+<script type="text/javascript">
+$(function(){	
+	var pg = App.macRpc.svcMain.ui, pp = pg.params,
+		tabs = pg.find('.tabs'),
+		methodGd = pg.seek('methodGd'),
+		refGd = pg.seek('refGd'),
+		svcGd = pg.seek('svcGd'),
+		hd = pg.children('.head'),
+		title = hd.seek('title'),
+		info = pg.seek('info');
+	
+	title.text(pp.sign);
+	
+	//填充tabs
+	tabs.mac('tabs', {
+		tabWidth: 80,
+		tabHeight: 32,
+		items: [{
+			code: 'methodPl', title: '方法列表', el: methodGd
+		}, {
+			code: 'svcPl', title: '提供者列表', el: svcGd
+		}, {
+			code: 'refPl', title: '消费者列表', el: refGd
+		}],
+	}).selectFirst(); 
+	
+	methodGd.mac('grid', {
+		cols : [{
+			field: 'sign', title: '方法名', width: 800
+		}],
+		pagerLength: 1000
+	});
+
+	refGd.mac('grid', {
+		cols : [{
+			field: 'addr', title : '地址', width: 180
+		},{
+			field: 'methods', title : '方法配置', width: 60,
+			render: function(r){
+				return $('<span class="a"></span>').click(function(){
+					App.open({
+						title: '服务消费者：' +  r.addr + '&nbsp;->&nbsp;' + pp.sign,
+						ctx: 'macRpc',
+						action: 'methodIndex',
+						params: { addr: r.addr, key: pp.sign, type: 1 }
+					});
+				}).append('查看');
+			}
+		},{
+			field: 'opt', title: '操作', width: 260,
+			render: function(r) {
+				var up = $('<span class="a"></span>').click(function(){
+					mac.confirm('确定要升级此实例吗？', function(){
+						$.post(App.soagov.ctx + '/svc/inst/toggle.do', {
+							act: 1, // ACT_UP
+							id: r.id
+						}, function(rs){
+							var ro = mac.eval(rs);
+							if (ro.success) {
+								gd.load();
+							} else {
+								mac.alert('升级失败');
+							}
+						});
+					});
+				}).append('升级');
+				var mock = $('<span class="a"></span>').click(function(){
+					App.open({
+						title: '服务结果模拟',
+						ctx: 'macRpc',
+						action: 'svcInstMock',
+						params: r
+					}, gd.load);
+				}).append('模拟');
+				var down = $('<span class="a"></span>').click(function(){
+					mac.confirm('确定要降级此实例吗？', function(){
+						$.post(App.soagov.ctx + '/svc/inst/toggle.do', {
+							act: 2, // ACT_DOWN
+							id: r.id
+						}, function(rs){
+							var ro = mac.eval(rs);
+							if (ro.success) {
+								gd.load();
+							} else {
+								mac.alert('降级失败');
+							}
+						});
+					});
+				}).append('降级');
+				var bw = $('<span class="a"></span>').click(function(){
+					App.open({
+						ctx: 'macRpc',
+						action: 'svcInstBw',
+						params: r
+					}, gd.load);
+				}).append('黑白名单');
+				var p = $('<div></div>').append(mock).append('&nbsp;');
+				switch (r.status) {
+				case 1: // on
+					return p.append(down);
+				case 2: // off
+					return p.append(up);
+				case 3: // mocking
+					return p.append(up).append('&nbsp;').append(down);
+				}
+			}
+		},{
+			field: 'version', title : '上次更新时间', width: 180,
+			render: function(r){
+				return new Date(r.version.time).format('yyyy-MM-dd HH:mm:ss.S');
+			}
+		}],
+		pagerLength: 1000
+	});
+
+	svcGd.mac('grid', {
+		cols : [{
+			field: 'addr', title : '地址', width: 120
+		},{
+			field: 'methods', title : '方法配置', width: 60,
+			render: function(r){
+				return $('<span class="a"></span>').click(function(){
+					App.open({
+						title: '服务提供者：' +  r.addr + '&nbsp;->&nbsp;' + pp.sign,
+						ctx: 'macRpc',
+						action: 'methodIndex',
+						params: { addr: r.addr, key: pp.sign, type: 0 }
+					});
+				}).append('查看');
+			}
+		},{
+			field: 'limit', title: '主限流', width: 140,
+			render: function(r) {
+				var d = r.spyData;
+				if (!d) {
+					return '未知';
+				}
+				var c = d.svcConfig;
+				if (c.slaConfigOn) {
+					var s = d.tpsBucket.limit, 
+						limit = '<span>' + (s > 99999? '无上限': s) + '</span>';
+					var mon = $('<span class="a"></span>').click(function(){
+						var p = pg.parent();
+						r.svc = pp; //
+						App.show({
+							ctx: 'macRpc',
+							action: 'svcInstMonitor',
+							params: { addr: r.addr, key: pp.sign, type: 0 }
+						}, function(){
+							App.show({
+								ctx: 'macRpc',
+								action: 'svcInstIndex',
+								params: pp
+							}, $.noop, p);
+						}, pg.parent());
+					}).append('流量监控');
+					return $('<div></div>').append(limit).append('&nbsp;').append(mon);
+				}
+				return '未开启';
+			}
+		},{
+			field: 'opt', title: '操作', width: 260,
+			render: function(r) {
+				var up = $('<span class="a"></span>').click(function(){
+					mac.confirm('确定要升级此实例吗？', function(){
+						$.post(App.soagov.ctx + '/svc/inst/toggle.do', {
+							act: 1, // ACT_UP
+							id: r.id
+						}, function(rs){
+							var ro = mac.eval(rs);
+							if (ro.success) {
+								gd.load();
+							} else {
+								mac.alert('升级失败');
+							}
+						});
+					});
+				}).append('升级');
+				var mock = $('<span class="a"></span>').click(function(){
+					App.open({
+						title: '服务结果模拟',
+						ctx: 'macRpc',
+						action: 'svcInstMock',
+						params: r
+					}, gd.load);
+				}).append('模拟');
+				var down = $('<span class="a"></span>').click(function(){
+					mac.confirm('确定要降级此实例吗？', function(){
+						$.post(App.soagov.ctx + '/svc/inst/toggle.do', {
+							act: 2, // ACT_DOWN
+							id: r.id
+						}, function(rs){
+							var ro = mac.eval(rs);
+							if (ro.success) {
+								gd.load();
+							} else {
+								mac.alert('降级失败');
+							}
+						});
+					});
+				}).append('降级');
+				var limit = $('<span class="a"></span>').click(function(){
+					App.open({
+						ctx: 'macRpc',
+						action: 'svcInstLimit',
+						params: { data: r.spyData }
+						// onClose: gd.load
+					}, gd.load);
+				}).append('限流');
+				var bw = $('<span class="a"></span>').click(function(){
+					App.open({
+						ctx: 'macRpc',
+						action: 'svcInstBw',
+						params: { data: r.spyData }
+						// onClose: gd.load
+					}, gd.load);
+				}).append('黑白名单');
+				var p = $('<div></div>').append(mock).append('&nbsp;')
+					.append(limit).append('&nbsp;').append(bw).append('&nbsp;');
+				switch (r.status) {
+				case 1: // on
+					return p.append(down);
+				case 2: // off
+					return p.append(up);
+				case 3: // mocking
+					return p.append(up).append('&nbsp;').append(down);
+				}
+			}
+		},{
+			field: 'time', title : '上次更新时间', width: 180,
+			render: function(r){
+				return new Date(r.time).format('yyyy-MM-dd HH:mm:ss.S');
+			}
+		}],
+		pagerLength: 1000
+	});
+
+	function init(d) {
+		methodGd.loadData(pp.methods);
+		svcGd.loadData(d.providers);
+		refGd.loadData(d.consumers);
+	}
+	
+	// 调用spy方法，获取远程节点的服务配置与监控数据
+	$.get(App.macRpc.ctx + '/svc/get.do', {
+		key: pp.sign
+	}, function(rs){
+		var ro = mac.eval(rs);
+		if (ro.success) {
+			init(ro.data);
+		}
+	});
+
+	function adjust(){
+		var h = pg.parent().height();
+		pg.height(h);
+		h = h - hd.height();
+		tabs.width(pg.width());
+		tabs.height(h);
+		tabs.adjust();
+		h = tabs.children('.body').height();
+		refGd.parent().height(h);
+		refGd.adjust();
+		svcGd.parent().height(h);
+		svcGd.adjust();
+	}
+	$(window).resize(adjust);
+	adjust();
+	
+	hd.seek('back').click(function(){
+		App.show({
+			ctx: 'macRpc',
+			action: 'svcIndex'
+		}, $.noop, App.main);
+	});
+});
+</script>
+<div class="head">
+	<div class="title">
+		<span class="a" name="back">服务列表</span>
+		<span>&gt;</span>
+		<span name="title"></span>
+	</div>
+</div>
+<div class="tabs"></div>
+<div class="grid" name="methodGd"></div>
+<div class="grid" name="refGd"></div>
+<div class="grid" name="svcGd"></div>

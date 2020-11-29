@@ -1,0 +1,25 @@
+<services>
+	<!-- <service ref="demoService" group="demo" name="demo1" -->
+	<!-- interface="com.boarsoft.rpc.demo.DemoService" version="1.0.0" -->
+	<!-- timeout="6000" mocker="demoMocker"> -->
+	<!-- </service> -->
+	<service ref="demoService" group="demo" name="demo1" uri="/demo"
+		interface="com.boarsoft.rpc.demo.DemoService" version="1.0.0" timeout="6000"
+		mocker="demoMocker">
+		<method name="hello" uri="/hello2">
+			<arg index="0" type="com.boarsoft.rpc.demo.User" />
+		</method>
+		<!-- <method name="helloSN" type="SN"> -->
+		<!-- <arg index="0" type="com.boarsoft.rpc.demo.User" /> -->
+		<!-- </method> -->
+		<!-- <method name="helloAN" type="AN"> -->
+		<!-- <arg index="0" type="com.boarsoft.rpc.demo.User" /> -->
+		<!-- </method> -->
+		<!-- <method name="helloBN" type="BN"> -->
+		<!-- <arg index="0" type="com.boarsoft.rpc.demo.User" /> -->
+		<!-- </method> -->
+	</service>
+	<service ref="rpcSvcSpy" group="soagov" name="svcSpy"
+		interface="com.boarsoft.soagov.spy.SvcSpy" version="1.0.0" timeout="6000">
+	</service>
+</services>

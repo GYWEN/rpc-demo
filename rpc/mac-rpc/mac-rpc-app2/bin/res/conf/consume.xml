@@ -1,0 +1,32 @@
+<references>
+	<reference id="demoService" group="demo" name="demo1"
+		version="1.0.0" interface="com.boarsoft.rpc.demo.DemoService"
+		timeout="6000" mocker="demoMocker">
+		<!-- <method name="hello" type="SC" timeout="6000" time="5"> -->
+		<!-- <arg index="0" type="com.boarsoft.rpc.demo.User" /> -->
+		<!-- <arg index="0" type="long" /> -->
+		<!-- <arg index="0" type="int" /> -->
+		<!-- </method> -->
+		<method name="helloSC" type="SC" callback="demoCallback">
+			<arg index="0" type="com.boarsoft.rpc.demo.User" />
+		</method>
+		<method name="helloAC" type="AC">
+			<arg index="0" type="com.boarsoft.rpc.demo.User" />
+		</method>
+		<method name="helloSB" type="SB">
+			<arg index="0" type="com.boarsoft.rpc.demo.User" />
+		</method>
+		<method name="helloAB" type="AB">
+			<arg index="0" type="com.boarsoft.rpc.demo.User" />
+		</method>
+		<method name="helloSN" type="SN">
+			<arg index="0" type="com.boarsoft.rpc.demo.User" />
+		</method>
+		<method name="helloAN" type="AN">
+			<arg index="0" type="com.boarsoft.rpc.demo.User" />
+		</method>
+		<method name="helloBN" type="BN">
+			<arg index="0" type="com.boarsoft.rpc.demo.User" />
+		</method>
+	</reference>
+</references>

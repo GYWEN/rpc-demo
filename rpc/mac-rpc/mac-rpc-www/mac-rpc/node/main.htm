@@ -1,0 +1,154 @@
+<script type="text/javascript">
+$(function(){	
+	var pg = App.macRpc.nodeMain.ui, pp = pg.params,
+		tabs = pg.find('.tabs'), infPl = pg.seek('infPl'),
+		refGd = pg.seek('refGd'), svcGd = pg.seek('svcGd'),
+		hd = pg.children('.head'), title = hd.seek('title');
+
+	title.text(pp.addr);
+
+	function init(r) {
+		var o = r.info, m = o.meta, s = '';
+		infPl.seek("addr").text(o.addr);
+		infPl.seek("tag").text(o.tag);
+		infPl.seek("version").text(o.version);
+		for (var k in m) {
+			s += k + '=' + m[k] + '<br>';
+		}
+		infPl.seek("refs").text(r.refs.length);
+		infPl.seek("svcs").text(r.svcs.length);
+		infPl.seek("meta").html(s);
+		refGd.loadData(r.refs);
+		svcGd.loadData(r.svcs);
+	}
+
+	//填充tabs
+	tabs.mac('tabs', {
+		tabWidth: 80,
+		tabHeight: 32,
+		items: [{
+			code: 'infPl', title: '基本信息', el: infPl
+		}, {
+			code: 'refPl', title: '引用的服务', el: refGd
+		}, {
+			code: 'svcPl', title: '提供的服务', el: svcGd
+		}],
+	}).selectFirst();
+		
+	//引用的服务
+	refGd.mac('grid', {
+		cols : [{
+			field: 'group', title : '分组', width: 120
+		},{
+			field: 'name', title : '名称', width: 120
+		},{
+			field: 'interface', title : '接口', width: 300
+		},{
+			field: 'version', title : '版本', width: 80
+		},{
+			field: 'type', title : '类型', width: 60
+		},{
+			field: 'timeout', title : '超时', width: 70
+		},{
+			field: 'mocker', title : '模拟器', width: 120
+		}],
+		pagerLength: 1000
+	});
+	//提供的服务
+	svcGd.mac('grid', {
+		cols : [{
+			field: 'group', title : '分组', width: 120
+		},{
+			field: 'name', title : '名称', width: 120
+		},{
+			field: 'version', title : '版本', width: 80
+		},{
+			field: 'timeout', title : '超时', width: 70
+		},{
+			field: 'interface', title : '接口', width: 310
+		},{
+			field: 'opt', title : '操作', width: 130,
+			render: function (r) {
+				var p = $('<div></div>');
+				$('<span class="a"></span>').click(function(){
+					App.show({
+						ctx: 'macRpc',
+						action: 'svcMonitor',
+						params: { }
+					}, $.noop, pg.parent());
+				}).append('监控').appendTo(p);
+				p.append('&nbsp;');
+				return p;
+			}
+		}],
+		pagerLength: 1000
+	});
+
+	function adjust(){
+		var h = pg.parent().height();
+		pg.height(h);
+		tabs.height(h - hd.height() - 8);
+		tabs.adjust();
+		h = tabs.children('.body').height();
+		refGd.parent().height(h);
+		refGd.adjust();
+		svcGd.parent().height(h);
+		svcGd.adjust();
+	}
+	$(window).resize(adjust);
+	adjust();
+
+	title.click(function(){
+		App.show({
+			ctx: 'macRpc',
+			action: 'nodeIndex',
+			params: pp
+		}, $.noop, pg.parent());
+	});
+
+	if (pp && pp.addr) {
+		$.get(App.macRpc.ctx + '/node/get.do', {
+			addr: pp.addr
+		}, function(rs){
+			var o = mac.eval(rs);
+			if (o.success) {
+				init(o.data);
+			}
+		});
+	}
+});
+</script>
+<div class="head">
+	<div class="title">
+		当前节点:<span  class="a" name="title">XXXX</span>
+	</div>
+</div>
+<div class="tabs"></div>
+<div class="form" name="infPl">
+	<div class="item">
+		<span class="label">IP地址：</span>
+		<span class="value" name="addr"></span>
+	</div>
+	<div class="item">
+		<span class="label">更新时间：</span>
+		<span class="value" name="version"></span>
+	</div>
+	<div class="item">
+		<span class="label">标签：</span>
+		<span class="value" name="tag"></span>
+	</div>
+	<div class="item">
+		<span class="label">引用服务数：</span>
+		<span class="value" name="refs"></span>
+	</div>
+	<div class="item">
+		<span class="label">暴露服务数：</span>
+		<span class="value" name="svcs"></span>
+	</div>
+	<div class="item">
+		<span class="label">meta：</span>
+		<span class="value" name="meta"></span>
+	</div>
+</div>
+<div class="grid" name="refGd"></div>
+<div class="grid" name="svcGd"></div>

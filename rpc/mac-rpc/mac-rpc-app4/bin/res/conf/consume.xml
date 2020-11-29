@@ -1,0 +1,6 @@
+<references>
+<!-- 	<reference id="demoService" group="demo" name="demo1" -->
+<!-- 		version="1.0.0" interface="com.boarsoft.rpc.demo.DemoService" -->
+<!-- 		timeout="6000" mocker="demoMocker"> -->
+<!-- 	</reference> -->
+</references>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+
+	<bean id="httpConfig" class="org.eclipse.jetty.server.HttpConfiguration">
+		<property name="secureScheme" value="https" />
+		<property name="securePort" value="8443" />
+		<property name="sendXPoweredBy" value="true" />
+		<property name="sendServerVersion" value="true" />
+		<property name="outputBufferSize" value="32768" />
+	</bean>
+
+	<bean class="com.boarsoft.rpc.http.jetty.JettyServer">
+		<property name="handler">
+			<bean class="com.boarsoft.rpc.http.jetty.handler.RpcJettyHandler">
+				<property name="ioHandlerMap">
+					<map>
+						<entry key="application/json">
+							<bean class="com.boarsoft.rpc.http.jetty.handler.DefaultJsonIoHandler">
+							</bean>
+						</entry>
+						<entry key="application/x-www-form-urlencoded">
+							<bean class="com.boarsoft.rpc.http.jetty.handler.FormalJsonIoHandler">
+							</bean>
+						</entry>
+					</map>
+				</property>
+			</bean>
+		</property>
+		<property name="connectorBuilders">
+			<set>
+				<bean class="com.boarsoft.rpc.http.jetty.connector.Http1ConnectorBuilder">
+					<property name="port" value="${rpc.http.port}" />
+					<property name="host" value="localhost" />
+					<property name="idleTimeout" value="3000000" />
+					<property name="config" ref="httpConfig" />
+				</bean>
+				<bean class="com.boarsoft.rpc.http.jetty.connector.Http2ConnectorBuilder">
+					<property name="port" value="8443" />
+					<property name="host" value="localhost" />
+					<property name="idleTimeout" value="3000000" />
+					<property name="config" ref="httpConfig" />
+					<property name="ksPassword" value="123456" />
+					<property name="kmPassword" value="123456" />
+				</bean>
+			</set>
+		</property>
+	</bean>
+</beans>

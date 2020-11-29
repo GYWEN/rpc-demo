@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.boarsoft</groupId>
+		<artifactId>mac-parent</artifactId>
+		<version>1.1.0</version>
+	</parent>
+	<version>1.1.1</version>
+	<artifactId>mac-rpc-center</artifactId>
+	<packaging>jar</packaging>
+	<name>mac-rpc 注册中心</name>
+
+	<build>
+		<!-- <finalName>${project.artifactId}-${project.version}</finalName> -->
+		<sourceDirectory>${basedir}/src</sourceDirectory>
+		<testSourceDirectory>${basedir}/test</testSourceDirectory>
+		<resources>
+			<resource>
+				<directory>${basedir}/src</directory>
+				<excludes>
+					<exclude>**/*.java</exclude>
+				</excludes>
+			</resource>
+			<resource>
+				<directory>${basedir}/res</directory>
+			</resource>
+		</resources>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<classpathPrefix>lib/</classpathPrefix>
+							<mainClass>com.boarsoft.boar.agent.Main</mainClass>
+						</manifest>
+					</archive>
+					<excludes>
+						<exclude>conf/</exclude>
+						<exclude>shell/</exclude>
+						<exclude>sql/</exclude>
+						<exclude>sbin/</exclude>
+						<exclude>*</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>
+								${project.build.directory}/lib
+							</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<configuration>
+					<encoding>UTF-8</encoding>
+				</configuration>
+				<executions>
+					<execution>
+						<id>copy4test</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${basedir}/res</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/resource/common</directory>
+									<filtering>true</filtering>
+								</resource>
+								<resource>
+									<directory>${basedir}/resource/${env.id}</directory>
+									<filtering>true</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy4package</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/res</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.17</version>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptors>
+						<descriptor>/assembly/full.xml</descriptor>
+					</descriptors>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.boarsoft</groupId>
+			<artifactId>mac-rpc-core</artifactId>
+			<version>1.1.5</version>
+		</dependency>
+		<dependency>
+			<groupId>com.boarsoft</groupId>
+			<artifactId>mac-hessian-serialize</artifactId>
+			<version>1.1.1</version>
+		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>com.boarsoft</groupId> -->
+<!-- 			<artifactId>mac-kryo-serialize</artifactId> -->
+<!-- 			<version>1.0.0</version> -->
+<!-- 		</dependency> -->
+<!-- 		<dependency> -->
+<!-- 			<groupId>com.boarsoft</groupId> -->
+<!-- 			<artifactId>mac-fst-serialize</artifactId> -->
+<!-- 			<version>1.0.0</version> -->
+<!-- 		</dependency> -->
+	</dependencies>
+
+	<profiles>
+		<profile>
+			<id>DEV</id>
+			<properties>
+				<env.id>DEV</env.id>
+				<log.appender>STDOUT</log.appender>
+				<log.dir>d:/temp/logs/${project.artifactId}</log.dir>
+			</properties>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+		</profile>
+		<profile>
+			<id>CIT</id>
+			<properties>
+				<env.id>CIT</env.id>
+				<log.appender>FILE</log.appender>
+				<log.dir>/home/app/logs/${project.artifactId}</log.dir>
+			</properties>
+		</profile>
+		<profile>
+			<id>SIT</id>
+			<properties>
+				<env.id>SIT</env.id>
+				<log.appender>FILE</log.appender>
+				<log.dir>/home/app/logs/${project.artifactId}</log.dir>
+			</properties>
+		</profile>
+		<profile>
+			<id>PFM</id>
+			<properties>
+				<env.id>PFM</env.id>
+				<env.log.appender>FILE</env.log.appender>
+				<log.dir>/home/app/logs/${project.artifactId}</log.dir>
+			</properties>
+		</profile>
+	</profiles>
+</project>

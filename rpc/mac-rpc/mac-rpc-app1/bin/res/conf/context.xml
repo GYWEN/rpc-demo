@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+
+	<context:property-placeholder location="classpath:conf/config.properties" />
+	<!-- 配置包扫描，以识别注解，如：@Component, @Autowired -->
+	<context:component-scan base-package="com.boarsoft" />
+
+	<!-- 简单线程池配置 -->
+	<!-- Default thread pool which extends from ThreadPoolExecutor -->
+	<!-- <bean id="threadPool" class="com.boarsoft.concurrent.SimpleThreadPoolExecutor"> -->
+	<!-- <constructor-arg index="0" value="600" /> -->
+	<!-- <constructor-arg index="1" value="600" /> -->
+	<!-- <constructor-arg index="2" value="60000" /> -->
+	<!-- </bean> -->
+
+	<bean id="threadPool" class="java.util.concurrent.ThreadPoolExecutor">
+		<constructor-arg index="0" value="300" />
+		<constructor-arg index="1" value="300" />
+		<constructor-arg index="2" value="60000" />
+		<constructor-arg index="3">
+			<bean class="java.util.concurrent.TimeUnit" factory-method="valueOf">
+				<constructor-arg value="MILLISECONDS" />
+			</bean>
+		</constructor-arg>
+		<constructor-arg index="4">
+			<!-- <bean class="java.util.concurrent.SynchronousQueue"> -->
+			<!-- <bean class="java.util.concurrent.ArrayBlockingQueue"> -->
+			<bean class="java.util.concurrent.LinkedBlockingQueue">
+				<constructor-arg index="0" value="300" />
+			</bean>
+		</constructor-arg>
+		<constructor-arg index="5">
+			<bean class="java.util.concurrent.ThreadPoolExecutor$CallerRunsPolicy" />
+		</constructor-arg>
+	</bean>
+
+	<!-- Java AIO所需的IO线程池 -->
+	<bean id="ioThreadPool" class="com.boarsoft.concurrent.DaemonThreadPoolExecutor">
+		<constructor-arg index="0" value="5" />
+		<constructor-arg index="1" value="5" />
+		<constructor-arg index="2" value="60000" />
+	</bean>
+
+	<!-- 定时计划线程池，用于执行心跳等定时任务 -->
+	<bean id="scheduler" class="java.util.concurrent.ScheduledThreadPoolExecutor">
+		<constructor-arg index="0" value="5" />
+	</bean>
+
+	<bean id="hessianSerializer" class="com.boarsoft.serialize.HessianSerializer"></bean>
+
+	<bean id="rpcSerializer" class="com.boarsoft.rpc.serialize.RpcSerializer">
+		<property name="serializer" ref="hessianSerializer" />
+	</bean>
+
+	<!-- 配置RpcCore，使用上面三个线程池 -->
+	<bean id="rpcCore" class="com.boarsoft.rpc.core.RpcCore" depends-on="rpcSerializer">
+		<property name="threadPool" ref="threadPool" />
+		<property name="ioThreadPool" ref="ioThreadPool" />
+		<property name="scheduler" ref="scheduler" />
+		<property name="tag" value="${pod:0}" />
+	</bean>
+
+	<bean id="rpcSvcSpy" class="com.boarsoft.rpc.spy.RpcSvcSpyImpl">
+		<property name="scheduler" ref="scheduler" />
+		<property name="reqReader">
+			<bean class="com.boarsoft.rpc.spy.RpcSvcReqReader" />
+		</property>
+	</bean>
+</beans>

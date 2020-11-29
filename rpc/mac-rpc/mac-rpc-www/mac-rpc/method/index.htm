@@ -1,0 +1,45 @@
+<script type="text/javascript">
+$(function(){	
+	var pg = App.macRpc.methodIndex.ui, pp = pg.params,
+		methodGd = pg.seek('methodGd'),
+		hd = pg.children('.head');
+	
+	methodGd.mac('grid', {
+		cols : [{
+			field: 'sign', title: '方法签名', width: 360
+		}, {
+			field: 'type', title: '方法类型', width: 120,
+			render: function(r){
+				return Cache.mac.rpc.method.type[r.type];
+			}
+		}, {
+			field: 'protocol', title: '协议', width: 80
+		}, {
+			field: 'callback', title: '回调方法', width: 120
+		}, {
+			field: 'relativeId', title: '方法ID', width: 60
+		}, {
+			field: 'failover', title: '失败重试', width: 60
+		}, {
+			field: 'timeout', title: '超时时长', width: 80
+		}, {
+			field: 'autoMock', title: '自动模拟', width: 60
+		}],
+		loader: {
+			url: App.macRpc.ctx + '/method/list.do',
+			params: { addr: pp.addr, key: pp.key, type: pp.type, pageNo: 1, pageSize: 1000 },
+			autoLoad: true
+		},
+		pagerLength: 1000
+	});
+
+	function adjust(){
+		var h = pg.height();
+		methodGd.parent().height(h - 64);
+		methodGd.adjust();
+	}
+	$(window).resize(adjust);
+	adjust();
+});
+</script>
+<div class="grid" name="methodGd"></div>

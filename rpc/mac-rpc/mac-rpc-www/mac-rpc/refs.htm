@@ -1,0 +1,244 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.macRpc.refs.ui, pp = pg.params,
+		methodGd = pg.seek('methodGd'),
+		providerGd = pg.seek('providerGd'),
+		provider2Gd = pg.seek('provider2Gd'),
+		title = pg.seek('title'),
+		hd = pg.children('.head'),
+		title = hd.seek('title'),
+		back = hd.seek('back'),
+		tabs = pg.find('.tabs');
+	
+	title.text(pp.ref.id);
+	back.text(pp.reg.key);
+	
+	function load(gd, dd) {
+		var l = $.map(dd, function(v, k){
+			return { addr: v };
+		});
+		if (l) {
+			gd.loadData(l);
+		}
+	}
+	
+	tabs.mac('tabs', {
+		tabWidth: 80,
+		tabHeight: 32,
+		items: [{
+			code: 'providerPl', title: '服务提供者', el: pg.find('.providers')
+		}, {
+			code: 'methodPl', title: '方法列表', el: methodGd
+		}],
+	}).selectFirst();
+
+	function disable(addr) {
+		var k = pp.ref.sign, d = pp.all;
+		if (!addr) {
+			mac.alert('请先选择要禁用的服务提供者');
+			return;
+		}
+		mac.confirm('确定要禁用服务提供者 ' + addr + ' 吗?', function(){
+			$.post(App.ctx + '/mac/rpc/disable.do', {
+				target: pp.reg.key,
+				addr: addr,
+				key: k
+			}, function(rs){
+				var ro = mac.eval(rs);
+				if (ro.success) {
+					var a = d.mep[k], b = d.mdp[k], as = addr.split(',');
+					if (!b) {
+						b = d.mdp[k] = [];
+					}
+					for (var i in as) {
+						a.splice($.inArray(as[i], a), 1);
+						b.push(as[i]);
+					}
+					load(providerGd, a);
+					load(provider2Gd, b);
+					providerGd.seek('all').removeAttr('checked');
+					provider2Gd.seek('all').removeAttr('checked');
+				} else {
+					mac.alert(ro.data);
+				}
+			});
+		});
+	}
+	
+	function enable(addr) {
+		var k = pp.ref.sign, d = pp.all;
+		if (!addr) {
+			mac.alert('请先选择要启用的服务提供者');
+			return;
+		}
+		mac.confirm('确定要启用服务提供者 ' + addr + ' 吗?', function(){
+			$.post(App.ctx + '/mac/rpc/enable.do', {
+				target: pp.reg.key,
+				addr: addr,
+				key: k
+			}, function(rs){
+				var ro = mac.eval(rs);
+				if (ro.success) {
+					var a = d.mep[k], b = d.mdp[k], as = addr.split(',');
+					if (!a) {
+						a = d.mep[k] = [];
+					}
+					for (var i in as) {
+						b.splice($.inArray(as[i], b), 1);
+						a.push(as[i]);
+					}
+					load(providerGd, a);
+					load(provider2Gd, b);
+					providerGd.seek('all').removeAttr('checked');
+					provider2Gd.seek('all').removeAttr('checked');
+				} else {
+					mac.alert(ro.data);
+				}
+			});
+		});
+	}
+
+	providerGd.mac('grid', {
+		key: 'addr',
+		cols : [{
+			field: 'chk', title: '<input type="checkbox" name="all"/>', width: 24,
+			render: function(r){
+				return '<input type="checkbox" name="keys" value="' + r.addr + '"/>';
+			}
+		}, {
+			field: 'addr', title: '当前可用的服务提供者', width: 172
+		}, {
+			field: 'opt', title: '操作', width: 40,
+			render: function(r, tr, gd){
+				return $('<span></span>').click(function(){
+					disable(r.addr);
+				}).addClass('a').text('禁用');
+			}
+		}],
+		pagerLength: 1000
+	});
+
+	provider2Gd.mac('grid', {
+		key: 'addr',
+		cols : [{
+			field: 'chk', title: '<input type="checkbox" name="all"/>', width: 24,
+			render: function(r){
+				return '<input type="checkbox" name="keys" value="' + r.addr + '"/>';
+			}
+		}, {
+			field: 'addr', title: '已被禁用的服务提供者', width: 172
+		}, {
+			field: 'opt', title: '操作', width: 40,
+			render: function(r, tr, gd){
+				return $('<span></span>').click(function(){
+					enable(r.addr);
+				}).addClass('a').text('启用');
+			}
+		}],
+		pagerLength: 1000
+	});
+	
+	pg.seek('enable').click(function(){
+		var a = provider2Gd.seek('keys').filter(':checked');
+		a = $.map(a, function(v, k){
+			return $(v).val();
+		}).join(',');
+		enable(a);
+	});
+	pg.seek('disable').click(function(){
+		var a = providerGd.seek('keys').filter(':checked');
+		a = $.map(a, function(v, k){
+			return $(v).val();
+		}).join(',');
+		disable(a);
+	});
+	
+	providerGd.seek('all').click(function(){
+		var c = $(this);
+		providerGd.seek('keys').each(function(){
+			if (c.is(':checked')) {
+				$(this).prop('checked', true);
+			} else {
+				$(this).removeAttr('checked');
+			}
+			// toggleSelect($(this), c.is(':checked'));
+		});
+	});
+	
+	provider2Gd.seek('all').click(function(){
+		var c = $(this);
+		provider2Gd.seek('keys').each(function(){
+			if (c.is(':checked')) {
+				$(this).prop('checked', true);
+			} else {
+				$(this).removeAttr('checked');
+			}
+			// toggleSelect($(this), c.is(':checked'));
+		});
+	});
+
+	pg.seek('back').click(function(){
+		App.show({
+			ctx: 'macRpc',
+			action: 'nodeMain',
+			params: { reg: pp.reg, all: pp.all }
+		}, $.noop, pg.parent());
+	});
+	
+	function adjust(){
+		var h = pg.parent().height();
+		pg.height(h);
+		tabs.height(h - hd.height() - 8);
+		tabs.adjust();
+		h = tabs.children('.body').height();
+		methodGd.parent().height(h + 24);
+		methodGd.adjust();
+		//
+		h -= 24;
+		providerGd.parent().height(h);
+		providerGd.adjust();
+		provider2Gd.parent().height(h);
+		provider2Gd.adjust();
+		//
+		var m = pg.find('.mid').height(h);
+		m.css('padding-top', (h - 109) / 2);
+	}
+	$(window).resize(adjust);
+	adjust();
+	
+	function init() {
+		var l = [], r = pp.ref, s = r.sign,
+			o = r.methodConfigMap, a = pp.all;
+		for (var k in o) {
+			l.push(o[k]);
+		}
+		methodGd.loadData(l);
+		load(providerGd, a.mep[s]);
+		load(provider2Gd, a.mdp[s]);
+	}
+	init();
+});
+</script>
+<div class="head">
+	<div class="title">
+		当前节点:<span class="a" name="back">XXX</span>&gt;&gt;
+		<span name="title">XXXX</span>
+	</div>
+</div>
+<div class="tabs"></div>
+<div class="grid" name="methodGd"></div>
+<div class="providers">
+	<div class="fl">
+		<div class="grid" name="providerGd"></div>
+	</div>
+	<div class="mid">
+		<button name="disable">禁用&gt;&gt;</button>
+		<br>
+		<br>
+		<button name="enable">启用&lt;&lt;</button>
+	</div>
+	<div class="fl">
+		<div class="grid" name="provider2Gd"></div>
+	</div>
+	<div class="clear"></div>
+</div>

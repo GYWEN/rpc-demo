@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+        "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+        "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<constant name="struts.multipart.saveDir" value="/tmp"></constant>
+	<constant name="struts.action.extension" value="do"></constant>
+	<constant name="struts.objectFactory" value="spring" />
+	<constant name="struts.i18n.encoding" value="UTF-8" />
+
+	<constant name="struts.enable.DynamicMethodInvocation" value="false" />
+	<constant name="struts.convention.default.parent.package"
+		value="convention-default" />
+	<constant name="struts.convention.package.locators" value="action" />
+	<constant name="struts.convention.package.locators.basePackage"
+		value="com.boarsoft.boar" />
+
+	<constant name="struts.convention.action.disableScanning"
+		value="false" />
+	<!-- <constant name="struts.convention.action.includeJars" value=".*/boar-tool-jar*.*\.jar(!/)?"/> 
+		<constant name="struts.convention.action.includeJars" value=".*?/_wl_cls_gen.*?jar(!/)?"/> -->
+	<!-- 解决struts2扫描不到jar包中的action -->
+	<constant name="struts.convention.action.includeJars" value=".*mac-*.*" />
+	<!-- <constant name="struts.convention.action.includeJars" -->
+	<!-- value=".*boar-web-common*.*,.*boar-base-jar*.*,.*boar-deploy-jar*.*,.*boar-soagov-jar*.*" 
+		/> -->
+	<!-- <constant name="struts.convention.action.fileProtocols" value="jar,zip" 
+		/> -->
+	<constant name="struts.convention.action.fileProtocols" value="jar,zip" />
+
+	<constant name="struts.configuration.xml.reload" value="true" />
+	<constant name="struts.serve.static.browserCache" value="false" />
+
+	<package name="default-package" extends="convention-default"
+		abstract="true">
+		<interceptors>
+<!-- 			<interceptor name="basicAuthInterceptor" -->
+<!-- 				class="com.boarsoft.boar.common.interceptor.BasicAuthInterceptor" /> -->
+<!-- 			<interceptor name="daoShardingInterceptor" -->
+<!-- 				class="com.boarsoft.boar.common.interceptor.DaoShardInterceptor" /> -->
+			<interceptor-stack name="interceptors">
+<!-- 				<interceptor-ref name="basicAuthInterceptor" /> -->
+<!-- 				<interceptor-ref name="daoShardingInterceptor" /> -->
+				<interceptor-ref name="defaultStack" />
+			</interceptor-stack>
+		</interceptors>
+		<default-interceptor-ref name="interceptors"></default-interceptor-ref>
+	</package>
+</struts>

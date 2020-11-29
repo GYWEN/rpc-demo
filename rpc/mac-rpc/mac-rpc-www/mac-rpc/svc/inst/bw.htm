@@ -1,0 +1,148 @@
+<script type="text/javascript">
+$(function() {
+	var pg = App.macRpc.svcInstBw.ui, pp = pg.params,
+		gd = pg.find('.grid'), dd = pp.data, sc = dd.svcConfig,
+		set = sc.bwConfigs;
+	
+	var frm = {
+		key: pg.seek('key'),
+		black: pg.seek('black')
+	};
+
+	gd.mac('grid', {
+		cols : [{
+			field: 'key', width: 440, title: '黑白名单配置项',
+			render: function(r) {
+				return $('<span class="a"></span>').click(function(){
+					setValues(r);
+				}).append(r.key.replace("\n", '\n'));
+			}
+		},{
+			field: 'type', width: 80, title: '类型',
+			render: function(r) {
+				return r.black? '黑名单':'白名单';
+			}
+		},{
+			field: 'opt', title: '操作', width: 60,
+			render: function(r) {
+				return $('<span class="a"></span>').click(function(){
+					mac.confirm('确定要删除此黑白名单配置吗？', function(){
+						$.post(App.soagov.ctx + '/svc/inst/toggle.do', {
+							act: 9,
+							key: r.key,
+							svcId: pp.svcId
+						}, function(rs){
+							var ro = mac.eval(rs);
+							if (ro.success) {
+								set = $.map(set, function(a, i){
+									if (a.key == r.key) {
+										return null;
+									}
+									return a;
+								});
+								gd.loadData(set);
+							} else {
+								mac.alert('删除限流配置失败');
+							}
+						});
+					});
+					return false;
+				}).append('删除');
+			}
+		}]
+	});
+	gd.loadData(set);
+
+	function setValues(o) {
+		frm.key.val(o.key);
+		if (o.black) {
+			frm.black.attr('checked', true);
+		} else {
+			frm.black.removeAttr('checked');
+		}
+	}
+	
+	pg.seek('save').click(function() {
+		var na = frm.key.val().trim().split("\n");
+		na = $.map(na, function(n){
+			n = n.trim();
+			if (n.indexOf('=') > 0) {
+				return n;
+			}
+		});
+		var nk = na.join("&"), tt = nk? '添加新配置':'更新主配置';
+		if (nk) {
+			for (var i in set) {
+				if (set[i].key == nk) {
+					tt = '更新此配置';
+					break;
+				}
+			}
+		}
+		mac.confirm('确定要' + tt + '吗？', function(){
+			$.post(App.soagov.ctx + '/svc/inst/toggle.do', {
+				act: 8, // ACT_LIMIT
+				svcId: pp.svcId,
+				id: pp.id, //可选
+				key: nk, //可选
+				status: frm.black.is(':checked')? 0:1
+			}, function(rs){
+				var ro = mac.eval(rs);
+				if (ro.success) {
+					pg.callback();
+					pg.close();
+					mac.alert(tt + '成功');
+				} else {
+					mac.alert(tt + '失败');
+				}
+			});
+		});
+		return false;
+	});
+	var on = sc.bwConfigOn;
+	pg.seek('on').click(function() {
+		var me = $(this), tt = me.text();
+		mac.confirm('确定要' + tt + '吗？', function(){
+			$.post(App.soagov.ctx + '/svc/inst/toggle.do', {
+				act: on? 11:10, // ACT_BW_ON
+				svcId: pp.svcId,
+				id: pp.id //可选
+			}, function(rs){
+				var ro = mac.eval(rs);
+				if (ro.success) {
+					pg.callback();
+					pg.close();
+					mac.alert(tt + '成功');
+				} else {
+					mac.alert(tt + '失败');
+				}
+			});
+		});
+		return false;
+	}).text((on? '关闭':'开启') + '黑白名单');
+	pg.seek('cancel').click(function() {
+		pg.close();
+	});
+});
+</script>
+<div class="body">
+	<div class="grid"></div>
+</div>
+<div class="form">
+	<div class="item">
+		<span class="label">维度设置</span>
+		<textarea rows="2" cols="35" name="key"></textarea>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">黑名单</span>
+		<input type="checkbox" name="black" checked />
+		<div class="clear"></div>
+	</div>
+	<div class="clear"></div>
+	<div class="bottom">
+		<button name="save">添加或更新黑白名单配置</button>
+		<button name="on">开启黑白名单控制</button>
+		<button name="cancel">关闭</button>
+	</div>
+</div>

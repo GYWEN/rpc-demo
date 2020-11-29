@@ -1,0 +1,63 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.macRpc.svcIndex.ui, pp = pg.params,
+		svcGd = pg.seek('svcGd');
+
+	svcGd.mac('grid', {
+		key: 'sign',
+		cols : [{
+			field: 'group', title : '服务分组', width: 120
+		}, {
+			field: 'name', title : '服务名', width: 160
+		}, {
+			field: 'interface', title : '服务接口', width: 360
+		}, {
+			field: 'version', title: '版本', width: 80
+		}],
+		onRowClick: function(){
+			svcGd.find('.tr').removeClass('selected');
+			var r = svcGd.selected = $(this).addClass('selected'),
+				k = r.attr('name'), r = svcGd.data[k];
+			// window.location = '#mac-rpc/node?addr=' + r.attr('name');
+			App.show({
+				ctx: 'macRpc',
+				action: 'svcMain',
+				params: r
+			}, $.noop, pg.parent());
+		},
+		loader: {
+			url: App.macRpc.ctx + '/svc/list.do',
+			params: { key: App.getHashParam('key') },
+			autoLoad: true
+		},
+		pagerLength: 10
+	});
+
+	function adjust(){
+		var h = pg.parent().height();
+		pg.height(h);
+		svcGd.parent().height(h - 48);
+		svcGd.adjust();
+	}
+	$(window).resize(adjust);
+	adjust();
+
+	pg.seek('findBtn').click(function(e) {
+		svcGd.load($(pg.seek('key')).val());
+	});
+
+	pg.seek('key').keydown(function(e) {
+		if (e.keyCode == 13) {
+			svcGd.load($(pg.seek('key')).val());
+		}
+	});
+});
+</script>
+<div class="head">
+	&nbsp;&nbsp; 服务名：<input type="text" name="key" />
+	<button name="findBtn">查找</button>
+</div>
+	<div class="body">
+		<div class="grid" name="svcGd"></div>
+	</div>
+</div>

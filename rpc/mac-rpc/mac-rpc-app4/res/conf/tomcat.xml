@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+
+	<!-- <bean id="httpConfig" class="org.eclipse.jetty.server.HttpConfiguration"> -->
+	<!-- <property name="secureScheme" value="https" /> -->
+	<!-- <property name="securePort" value="8443" /> -->
+	<!-- <property name="sendXPoweredBy" value="true" /> -->
+	<!-- <property name="sendServerVersion" value="true" /> -->
+	<!-- <property name="outputBufferSize" value="32768" /> -->
+	<!-- </bean> -->
+
+	<bean class="com.boarsoft.rpc.http.tomcat.TomcatServer">
+		<property name="port" value="8083" />
+		<!-- <property name="contextPath" value="/test" /> -->
+		<property name="rpcTomcatServlet">
+			<bean class="com.boarsoft.rpc.http.tomcat.handler.RpcTomcatServlet">
+			</bean>
+		</property>
+		<property name="connectorList">
+			<list>
+				<bean class="org.apache.catalina.connector.Connector">
+					<!-- <constructor-arg index="0" -->
+					<!-- value="org.apache.coyote.http11.Http11NioProtocol" /> -->
+					<property name="port" value="8083" />
+				</bean>
+			</list>
+		</property>
+	</bean>
+</beans>

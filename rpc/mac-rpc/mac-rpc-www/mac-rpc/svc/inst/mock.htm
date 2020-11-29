@@ -1,0 +1,61 @@
+<script type="text/javascript">
+$(function() {
+	var pg = App.macRpc.svcInstMock.ui, pp = pg.params;
+	
+	var frm = {
+		mockType: pg.seek('mockType'),
+		mockJson: pg.seek('mockJson')
+	};
+
+	function getValues(){
+		return {
+			act: 3, // ACT_MOCK
+			svcId: pp.svcId,
+			id: pp.id,
+			mockType: frm.mockType.val(),
+			mockJson: frm.mockJson.val()
+		};
+	}
+	function setValues(o){
+		frm.mockType.val(o.mockType);
+		frm.mockJson.val(o.mockJson);
+	}
+	
+	pg.seek('ok').click(function() {
+		var pms = getValues();
+		mac.confirm('确定要模拟此实例吗？', function(){
+			$.post(App.soagov.ctx + '/svc/inst/toggle.do', pms, function(rs){
+				var ro = mac.eval(rs);
+				if (ro.success) {
+					pg.callback();
+					pg.close();
+					mac.alert('模拟成功');
+				} else {
+					mac.alert('模拟失败');
+				}
+			});
+		});
+		return false;
+	});
+	pg.seek('cancel').click(function() {
+		pg.close();
+	});
+});
+</script>
+<div class="form">
+	<div class="item">
+		<span class="label">虚拟返回类型</span>
+		<input type="text" name="mockType"/>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">虚拟返回值</span>
+		<textarea rows="2" cols="35" name="mockJson"></textarea>
+		<div class="clear"></div>
+	</div>
+	<div class="clear"></div>
+	<div class="bottom">
+		<button name="ok">确定</button>
+		<button name="cancel">取消</button>
+	</div>
+</div>

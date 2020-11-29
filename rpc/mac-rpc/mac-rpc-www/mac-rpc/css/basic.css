@@ -1,0 +1,23 @@
+#main>.nodeIndex,
+#main>.svcIndex,
+#main>.svcMain
+{ margin: 8px 0px 0px 8px; }
+
+#main>.nodeIndex>.left,
+#main>.svcIndex>.left {
+	overflow: hidden; border-right: 1px solid #CCC;
+	display: inline-block; white-space: nowrap;
+}
+#main>.nodeIndex>.left { width: 400px; }
+#main>.svcIndex>.left { width: 600px; }
+
+.nodeIndex .refs .providers .fl { width: 260px; }
+.nodeIndex .refs .providers .mid {
+	float: left; border-left: 1px solid #CCC; border-right: 1px solid #CCC;
+}
+.nodeIndex .refs .providers .mid button { width: 80px; margin: 8px; }
+
+.svcIndex .refs .providers .fl { width: 260px; }
+.svcIndex .refs .providers .mid {
+	float: left; border-left: 1px solid #CCC; border-right: 1px solid #CCC;
+}

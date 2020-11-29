@@ -1,0 +1,5 @@
+<services>
+	<service ref="nodeService" group="test" version="1.0.0"
+		interface="com.boarsoft.rpc.web.service.NodeService">
+	</service>
+</services>
